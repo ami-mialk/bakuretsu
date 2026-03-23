@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ば・く・れ・つ♡</title>
+
+<style>
+
+.title{
+font-size:20px;
+font-weight:900;
+color:#ffffff;
+
+/* グラデーション */
+background: linear-gradient(90deg, #00000077, #00000077, #00000077);
+
+
+}
+
+
+body{
+background-image:url("images/BG.png");
+background-size:cover;
+background-position:center;
+color:rgb(0, 0, 0);
+font-family:sans-serif;
+text-align:center;
+}
+
+/* TikTok縦カメラ */
+
+#camera{
+width:320px;
+height:560px;
+margin:auto;
+overflow:hidden;
+border-radius:20px;
+position:relative;
+
+background-image:url("images/Cam.png");
+background-size:cover;
+background-position:center;
+}
+
+#stage{
+position:absolute;
+width:100%;
+height:100%;
+transition:transform .8s;
+}
+
+/* W字キャラ配置 */
+
+.character{
+position:absolute;
+font-size:70px;
+transition:.3s;
+}
+
+#char0{left:30px; top:250px;}
+#char1{right:30px; top:250px;}
+
+#char2{left:-30px; bottom:90px;}
+#char3{left:80px; bottom: 60px;}
+#char4{right:-30px; bottom: 90px;}
+
+.pose{
+transform:scale(1) rotate(-0deg);
+}
+
+.hint{
+filter:brightness(1.04);
+}
+
+/* キャラ画像 */
+
+.character img{
+width:150px;
+height:150px;
+object-fit:contain;
+}
+
+/* キャラ選択 */
+
+#characterSelect{
+width:320px;
+margin:15px auto;
+display:flex;
+justify-content:space-between;
+}
+
+.charBtn{
+width:55px;
+height:55px;
+font-size:28px;
+background:#333;
+border-radius:10px;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+border:3px solid transparent;
+}
+
+.charBtn img{
+width:100%;
+height:100%;
+object-fit:cover;
+border-radius:8px;
+}
+
+.selected{
+border:3px solid yellow;
+}
+
+#info{
+font-weight:900;
+margin:10px;
+color:#ffffff;
+
+text-shadow:
+0 0 10px #000000;
+}
+
+button{
+padding:8px 16px;
+font-size:16px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h3 class="title">ドキドキば・く・れ・つ♡ルーレット！</h3>
+
+<div id="info">ポーズをキメよう！</div>
+
+<div id="camera">
+<div id="stage"></div>
+</div>
+
+<div id="characterSelect"></div>
+
+<button onclick="startGame()">ゲームスタート</button>
+
+<script>
+
+/* 設定 */
+
+const SELECT_TIME = 3000
+const ZOOM_DELAY_MIN = 1200
+const ZOOM_DELAY_MAX = 2500
+const ROUNDS = 3
+const HINT_TIME = 1500
+
+const characters=[
+
+{
+icon:"💙",
+idle:"images/chara_shio_idle.png",
+normal:"images/chara_shio_1.gif",
+pose:"images/chara_shio_2.png"
+},
+{
+icon:"❤️",
+idle:"images/chara_sono_idle.png",
+normal:"images/chara_sono_1.gif",
+pose:"images/chara_sono_2.png"
+},
+{
+icon:"🩷",
+idle:"images/chara_sano_idle.png",
+normal:"images/chara_sano_1.gif",
+pose:"images/chara_sano_2.png"
+},
+{
+icon:"💛",
+idle:"images/chara_yoshida_idle.png",
+normal:"images/chara_yoshida_1.gif",
+pose:"images/chara_yoshida_2.png"
+},
+{
+icon:"🤍",
+idle:"images/chara_yama_idle.png",
+normal:"images/chara_yama_1.gif",
+pose:"images/chara_yama_2.png"
+}
+
+]
+
+let selected=null
+let round=0
+let score=0
+let selectEnabled=false
+
+const stage=document.getElementById("stage")
+const info=document.getElementById("info")
+const selectDiv=document.getElementById("characterSelect")
+
+/* キャラ生成 */
+
+characters.forEach((c,i)=>{
+
+const div=document.createElement("div")
+div.className="character"
+div.id="char"+i
+
+const img=document.createElement("img")
+img.src = c.idle
+img.id = "img"+i   // ←追加
+
+div.appendChild(img)
+stage.appendChild(div)
+
+})
+
+/* 選択UI */
+
+characters.forEach((c,i)=>{
+
+const btn=document.createElement("div")
+btn.className="charBtn"
+btn.innerText = c.icon
+
+btn.onclick=()=>{
+
+if(!selectEnabled)return
+
+document.querySelectorAll(".charBtn")
+.forEach(b=>b.classList.remove("selected"))
+
+btn.classList.add("selected")
+
+selected=i
+
+}
+
+selectDiv.appendChild(btn)
+
+})
+
+/* 全体表示 */
+
+function showAll(){
+
+stage.style.transform="scale(.75) translateY(0)"
+
+}
+
+/* ズーム */
+
+function zoomTo(i){
+
+const char=document.getElementById("char"+i)
+
+const rect=char.getBoundingClientRect()
+const cam=document.getElementById("camera").getBoundingClientRect()
+
+const offsetX=(rect.left-cam.left)-(cam.width/2)+(rect.width/2)
+const offsetY=(rect.top-cam.top)-(cam.height/2)+(rect.height/2)
+
+stage.style.transform=`translate(${-offsetX}px,${-offsetY}px) scale(1.6)`
+
+setTimeout(()=>{
+
+if(selected===i){
+
+document.getElementById("img"+i).src = characters[i].pose
+char.classList.add("pose")
+
+score++
+info.innerText="成功！"
+
+}else{
+
+info.innerText="失敗"
+
+}
+
+setTimeout(nextRound,1200)
+
+},500)
+
+}
+
+/* ヒント */
+
+function hintCharacter(i){
+
+document.getElementById("char"+i).classList.add("hint")
+
+setTimeout(()=>{
+
+document.getElementById("char"+i).classList.remove("hint")
+
+},600)
+
+}
+
+/* ラウンド */
+
+function nextRound(){
+
+if(round>=ROUNDS){
+
+info.innerText="ゲーム終了 スコア "+score
+
+showIdleCharacters() // ←追加
+
+return
+}
+
+/* 待機状態に戻す */
+
+function showIdleCharacters(){
+
+characters.forEach((c,i)=>{
+
+let img=document.getElementById("img"+i)
+
+img.src = c.idle
+document.getElementById("char"+i).classList.remove("pose","hint")
+
+})
+
+}
+
+round++
+
+resetCharacters()
+showAll()
+
+selected=null
+
+document.querySelectorAll(".charBtn")
+.forEach(b=>b.classList.remove("selected"))
+
+info.innerText="キャラ選択！"
+
+selectEnabled=true
+
+let target=Math.floor(Math.random()*5)
+
+/* ヒントを先に出す */
+
+setTimeout(()=>{
+hintCharacter(target)
+},HINT_TIME)
+
+/* 選択終了 */
+
+setTimeout(()=>{
+
+selectEnabled=false
+
+let wait=random(ZOOM_DELAY_MIN,ZOOM_DELAY_MAX)
+
+setTimeout(()=>{
+
+zoomTo(target)
+
+},wait)
+
+},SELECT_TIME)
+
+}
+
+/* スタート */
+
+function startGame(){
+
+score=0
+round=0
+
+showAll()
+resetCharacters()
+
+nextRound()
+
+}
+
+/* リセット */
+
+function resetCharacters(){
+
+characters.forEach((c,i)=>{
+
+let img=document.getElementById("img"+i)
+
+/* GIF強制リスタート */
+img.src = ""
+img.src = c.normal
+
+document.getElementById("char"+i).classList.remove("pose","hint")
+
+})
+
+}
+
+/* utility */
+
+function random(min,max){
+return Math.floor(Math.random()*(max-min))+min
+}
+
+</script>
+
+</body>
+</html>
+
